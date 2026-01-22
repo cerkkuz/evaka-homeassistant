@@ -21,6 +21,15 @@ from .const import DOMAIN, MUNICIPALITIES
 
 _LOGGER = logging.getLogger(__name__)
 
+# Finnish day names (Monday=0 ... Sunday=6)
+DAYS_FI = ["Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai", "Sunnuntai"]
+
+
+def format_date_fi(dt: datetime) -> str:
+    """Format date with Finnish day name."""
+    day_name = DAYS_FI[dt.weekday()]
+    return f"{day_name}, {dt.strftime('%d.%m.%Y')}"
+
 
 class MessagesData(TypedDict):
     """Type for messages coordinator data."""
@@ -439,7 +448,7 @@ class EvakaDailyScheduleSensor(CoordinatorEntity[EvakaScheduleCoordinator], Sens
 
         daily_events = self.coordinator.data.get("daily", [])
         formatted_events = []
-        today_str = datetime.now().strftime("%A, %d.%m.%Y")
+        today_str = format_date_fi(datetime.now())
 
         for event in daily_events:
             period = event.get("period", {})
@@ -565,7 +574,7 @@ class EvakaTomorrowScheduleSensor(CoordinatorEntity[EvakaScheduleCoordinator], S
 
         next_day, label = self._get_next_daycare_day()
         next_day_str = next_day.strftime("%Y-%m-%d")
-        display_date = next_day.strftime("%A, %d.%m.%Y")
+        display_date = format_date_fi(next_day)
 
         weekly = self.coordinator.data.get("weekly", {})
         day_events = weekly.get(next_day_str, [])
