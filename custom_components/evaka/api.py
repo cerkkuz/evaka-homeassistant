@@ -312,9 +312,10 @@ class EvakaApi:
         self,
         start_date: datetime | None = None,
     ) -> dict[str, list[dict[str, Any]]]:
-        """Fetch schedule for the week.
+        """Fetch schedule for 2 weeks (current + next).
 
-        Returns events grouped by day for the week starting from start_date.
+        Returns events grouped by day. Fetches 2 weeks to ensure
+        we always have next Monday's data available on Fridays.
         """
         if start_date is None:
             start_date = datetime.now()
@@ -322,13 +323,14 @@ class EvakaApi:
         # Get to Monday of the current week
         days_since_monday = start_date.weekday()
         monday = start_date - timedelta(days=days_since_monday)
-        sunday = monday + timedelta(days=6)
+        # Fetch 2 weeks (14 days) to include next Monday
+        end_date = monday + timedelta(days=13)
 
-        events = await self.get_calendar_events(monday, sunday)
+        events = await self.get_calendar_events(monday, end_date)
 
-        # Group events by date
+        # Group events by date (14 days)
         weekly: dict[str, list[dict[str, Any]]] = {}
-        for i in range(7):
+        for i in range(14):
             day = monday + timedelta(days=i)
             day_str = day.strftime("%Y-%m-%d")
             weekly[day_str] = []

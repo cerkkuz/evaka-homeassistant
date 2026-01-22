@@ -68,6 +68,7 @@ async def async_setup_entry(
         EvakaMessagesSensor(messages_coordinator, municipality, entry),
         EvakaUnreadCountSensor(messages_coordinator, municipality, entry),
         EvakaDailyScheduleSensor(schedule_coordinator, municipality, entry),
+        EvakaTomorrowScheduleSensor(schedule_coordinator, municipality, entry),
         EvakaWeeklyScheduleSensor(schedule_coordinator, municipality, entry),
     ])
 
@@ -487,6 +488,137 @@ class EvakaDailyScheduleSensor(CoordinatorEntity[EvakaScheduleCoordinator], Sens
 
         return {
             "date": today_str,
+            "events": formatted_events,
+            "event_count": len(formatted_events),
+            "epaper_summary": epaper_summary,
+            "first_event": (
+                formatted_events[0]["title"] if formatted_events else ""
+            ),
+            "first_event_time": (
+                formatted_events[0]["start_time"] if formatted_events else ""
+            ),
+        }
+
+
+class EvakaTomorrowScheduleSensor(CoordinatorEntity[EvakaScheduleCoordinator], SensorEntity):
+    """Sensor showing tomorrow's (or next Monday's) daycare schedule."""
+
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:calendar-arrow-right"
+
+    def __init__(
+        self,
+        coordinator: EvakaScheduleCoordinator,
+        municipality: str,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._municipality = municipality
+        self._entry = entry
+        self._attr_unique_id = (
+            f"evaka_tomorrow_schedule_{municipality}_{entry.entry_id}"
+        )
+        municipality_name = MUNICIPALITIES[municipality]["name"]
+        self._attr_name = f"Evaka {municipality_name} Tomorrow"
+
+    def _get_next_daycare_day(self) -> tuple[datetime, str]:
+        """Get the next daycare day (tomorrow, or Monday if Friday/weekend).
+
+        Returns tuple of (target_date, label).
+        """
+        today = datetime.now()
+        weekday = today.weekday()  # Monday=0, Sunday=6
+
+        if weekday == 4:  # Friday -> next Monday
+            next_day = today + timedelta(days=3)
+            label = "Maanantai"
+        elif weekday == 5:  # Saturday -> next Monday
+            next_day = today + timedelta(days=2)
+            label = "Maanantai"
+        elif weekday == 6:  # Sunday -> next Monday
+            next_day = today + timedelta(days=1)
+            label = "Maanantai"
+        else:  # Mon-Thu -> tomorrow
+            next_day = today + timedelta(days=1)
+            label = "Huomenna"
+
+        return next_day, label
+
+    @property
+    def native_value(self) -> int:
+        """Return the number of events for next daycare day."""
+        if not self.coordinator.data:
+            return 0
+
+        next_day, _ = self._get_next_daycare_day()
+        next_day_str = next_day.strftime("%Y-%m-%d")
+        weekly = self.coordinator.data.get("weekly", {})
+
+        return len(weekly.get(next_day_str, []))
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return next daycare day's schedule as attributes."""
+        if not self.coordinator.data:
+            return {"events": [], "event_count": 0, "summary": "No data"}
+
+        next_day, label = self._get_next_daycare_day()
+        next_day_str = next_day.strftime("%Y-%m-%d")
+        display_date = next_day.strftime("%A, %d.%m.%Y")
+
+        weekly = self.coordinator.data.get("weekly", {})
+        day_events = weekly.get(next_day_str, [])
+
+        formatted_events = []
+        for event in day_events:
+            period = event.get("period", {})
+            start_str = period.get("start", "")
+            end_str = period.get("end", start_str)
+
+            start_time = ""
+            end_time = ""
+            if "T" in start_str:
+                try:
+                    dt = datetime.fromisoformat(
+                        start_str.replace("Z", "+00:00")
+                    )
+                    start_time = dt.strftime("%H:%M")
+                except ValueError:
+                    pass
+            if "T" in end_str:
+                try:
+                    dt = datetime.fromisoformat(end_str.replace("Z", "+00:00"))
+                    end_time = dt.strftime("%H:%M")
+                except ValueError:
+                    pass
+
+            formatted_events.append({
+                "title": event.get("title", "Event"),
+                "description": event.get("description", ""),
+                "start_time": start_time,
+                "end_time": end_time,
+                "all_day": "T" not in start_str,
+            })
+
+        # Create e-paper friendly summary
+        if formatted_events:
+            summary_lines = [display_date]
+            for e in formatted_events[:5]:
+                if e["start_time"]:
+                    summary_lines.append(
+                        f"{e['start_time']}-{e['end_time']}: {e['title'][:25]}"
+                    )
+                else:
+                    summary_lines.append(f"• {e['title'][:30]}")
+            epaper_summary = "\n".join(summary_lines)
+        else:
+            epaper_summary = f"{display_date}\nEi tapahtumia"
+
+        return {
+            "date": display_date,
+            "label": label,
+            "is_next_week": label == "Maanantai",
             "events": formatted_events,
             "event_count": len(formatted_events),
             "epaper_summary": epaper_summary,
