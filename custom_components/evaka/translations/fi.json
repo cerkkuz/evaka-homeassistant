@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Evaka-päiväkotikalenteri",
+        "description": "Yhdistä Evaka-päiväkotikalenteriisi käyttäen sähköpostikirjautumista.\n\n**Huom:** Sinun täytyy olla ottanut käyttöön 'Sähköpostilla kirjautuminen' Evaka-profiiliasetuksissasi.",
+        "data": {
+          "municipality": "Kunta",
+          "username": "Sähköposti / Käyttäjätunnus",
+          "password": "Salasana"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Virheellinen käyttäjätunnus tai salasana, tai sähköpostikirjautuminen ei ole käytössä.",
+      "cannot_connect": "Evakaan ei saada yhteyttä. Tarkista internetyhteys.",
+      "unknown": "Odottamaton virhe"
+    },
+    "abort": {
+      "already_configured": "Tämä Evaka-tili on jo määritetty"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Päivitä tunnukset",
+        "description": "Päivitä Evaka-kirjautumistietosi.",
+        "data": {
+          "username": "Sähköposti / Käyttäjätunnus",
+          "password": "Salasana"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Virheellinen käyttäjätunnus tai salasana",
+      "cannot_connect": "Evakaan ei saada yhteyttä"
+    }
+  }
+}

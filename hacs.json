@@ -1,0 +1,7 @@
+{
+  "name": "Evaka Daycare Calendar",
+  "render_readme": true,
+  "domains": ["calendar"],
+  "country": ["FI"],
+  "homeassistant": "2023.1.0"
+}

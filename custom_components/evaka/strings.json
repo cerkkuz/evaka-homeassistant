@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Evaka Daycare Calendar",
+        "description": "Connect to your Evaka daycare calendar using your weak login credentials.\n\n**Note:** You must have 'Email login' enabled in your Evaka profile settings.",
+        "data": {
+          "municipality": "Municipality",
+          "username": "Email / Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid username or password, or weak login is not enabled for your account.",
+      "cannot_connect": "Cannot connect to Evaka. Please check your internet connection.",
+      "unknown": "An unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This Evaka account is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Update Credentials",
+        "description": "Update your Evaka login credentials.",
+        "data": {
+          "username": "Email / Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid username or password",
+      "cannot_connect": "Cannot connect to Evaka"
+    }
+  }
+}
