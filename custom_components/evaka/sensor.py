@@ -683,20 +683,39 @@ class EvakaWeeklyScheduleSensor(CoordinatorEntity[EvakaScheduleCoordinator], Sen
         formatted_week = {}
         epaper_lines = []
 
-        # Sort dates
+        # Sort dates and filter to show upcoming weekdays only
+        today = datetime.now()
+        today_str = today.strftime("%Y-%m-%d")
         sorted_dates = sorted(weekly.keys())
 
-        for i, date_str in enumerate(sorted_dates):
-            events = weekly[date_str]
-            day_name = day_names[i] if i < len(day_names) else "?"
-            day_name_fi = day_names_fi[i] if i < len(day_names_fi) else "?"
+        # Filter to only future/today dates that are weekdays (Mon-Fri)
+        upcoming_dates = []
+        for date_str in sorted_dates:
+            if date_str >= today_str:
+                try:
+                    dt = datetime.strptime(date_str, "%Y-%m-%d")
+                    if dt.weekday() < 5:  # Monday=0 to Friday=4
+                        upcoming_dates.append(date_str)
+                except ValueError:
+                    pass
 
-            # Parse date for display
+        # Use upcoming weekdays for display
+        sorted_dates = upcoming_dates[:7] if upcoming_dates else sorted_dates[:7]
+
+        for i, date_str in enumerate(sorted_dates):
+            events = weekly.get(date_str, [])
+
+            # Parse date for display and get correct day name
             try:
                 dt = datetime.strptime(date_str, "%Y-%m-%d")
                 display_date = dt.strftime("%d.%m")
+                weekday_idx = dt.weekday()
+                day_name = day_names[weekday_idx]
+                day_name_fi = day_names_fi[weekday_idx]
             except ValueError:
                 display_date = date_str
+                day_name = "?"
+                day_name_fi = "?"
 
             day_events = []
             for event in events:
