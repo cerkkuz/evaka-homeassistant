@@ -737,6 +737,11 @@ class EvakaWeeklyScheduleSensor(CoordinatorEntity[EvakaScheduleCoordinator], Sen
         today = datetime.now()
         week_number = today.isocalendar()[1]
 
+        # Individual day lines for e-paper (no newlines)
+        day_attrs = {}
+        for i, line in enumerate(epaper_lines[:7]):  # Max 7 days (Mon-Sun)
+            day_attrs[f"day{i+1}"] = line
+
         return {
             "week_number": week_number,
             "week": formatted_week,
@@ -747,4 +752,5 @@ class EvakaWeeklyScheduleSensor(CoordinatorEntity[EvakaScheduleCoordinator], Sen
             "days_with_events": sum(
                 1 for d in formatted_week.values() if d["event_count"] > 0
             ),
+            **day_attrs,  # Add day1, day2, ... day7 attributes
         }
